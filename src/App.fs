@@ -1,17 +1,19 @@
 module Particles
 
-open Fable.Import
+open Fable.Core
 open Fable.Core.JsInterop
+open Browser.Types
+open Browser
 
 let width = 900.
 let height = 630.
 
-let canvas = Browser.document.getElementsByTagName("canvas").[0] :?> Browser.HTMLCanvasElement
+let canvas = document.getElementsByTagName("canvas").[0] :?> HTMLCanvasElement
 let ctx = canvas.getContext_2d()
 canvas.width <- width
 canvas.height <- height
 
-let drawBg (ctx: Browser.CanvasRenderingContext2D) (canvas: Browser.HTMLCanvasElement) =
+let drawBg (ctx: CanvasRenderingContext2D) (canvas: HTMLCanvasElement) =
     ctx.fillStyle <- !^ "#777"
     ctx.fillRect ( 0.,0., canvas.width, canvas.height )
 
@@ -28,15 +30,15 @@ type Particle =
 let palette = [| "red"; "green"; "orange"; "gray"; "teal" |]
 
 let randomParticle () =
-    let randomIndex = (float palette.Length * JS.Math.random()) |> int
+    let randomIndex = (float palette.Length *  JS.Math.random()) |> int
     {  Coord = { X = JS.Math.random() * width*0.8 + (width*0.1); Y = 600. } 
        Velocity = { X = JS.Math.random() * 2. - 1.; Y = 0.0 }
        Radius = 10.
        Color = palette.[randomIndex] }
 
 let drawParticle 
-    (ctx: Browser.CanvasRenderingContext2D)
-    (canvas: Browser.HTMLCanvasElement) p =
+    (ctx: CanvasRenderingContext2D)
+    (canvas: HTMLCanvasElement) p =
     ctx.beginPath()
     ctx.arc
         ( p.Coord.X, canvas.height - (p.Coord.Y + p.Radius),
@@ -74,7 +76,7 @@ let addParticles particles =
     else particles
 
 let seconds() = System.DateTime.Now.TimeOfDay.TotalSeconds
-let requestAnimationFrame = Browser.window.requestAnimationFrame >> ignore
+let requestAnimationFrame = window.requestAnimationFrame >> ignore
 
 type State = Spawning | Regular | Completed
 
