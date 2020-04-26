@@ -1,11 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
-    <ItemGroup>
-        <Compile Include="App.fs" />
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="Fable.Browser.Dom" Version="1.0.0" />
-    </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Config.fs" />
+    <Compile Include="Vector2.fs" />
+    <Compile Include="Rectangle.fs" />
+    <Compile Include="QuadTree.fs" />
+    <Compile Include="Particle.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Browser.Dom" Version="1.0.0" />
+  </ItemGroup>
 </Project>
