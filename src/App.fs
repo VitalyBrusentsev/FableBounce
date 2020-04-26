@@ -1,131 +1,138 @@
-module Particles
+namespace FableBounce
 
-open Fable.Core
-open Fable.Core.JsInterop
-open Browser.Types
-open Browser
+module App =
 
-let width = 900.
-let height = 630.
+  open Fable.Core
+  open Fable.Core.JsInterop
+  open Browser.Types
+  open Browser
 
-let canvas = document.getElementsByTagName("canvas").[0] :?> HTMLCanvasElement
-let ctx = canvas.getContext_2d()
-canvas.width <- width
-canvas.height <- height
+  open Config
+  open Particle
 
-let drawBg (ctx: CanvasRenderingContext2D) (canvas: HTMLCanvasElement) =
-    ctx.fillStyle <- !^ "#777"
-    ctx.fillRect ( 0.,0., canvas.width, canvas.height )
+  let canvas = document.querySelector ("canvas") :?> HTMLCanvasElement
+  let ctx = canvas.getContext_2d()
 
-let drawText (text, x, y) =
-    ctx.fillStyle <- !^ "#333"
-    ctx.font <- "bold 40pt";
-    ctx.fillText(text, x, y)
+  canvas.width <- Width
+  canvas.height <- Height
 
-type Point = { X: float; Y: float }
+  let drawBg (ctx: CanvasRenderingContext2D) (canvas: HTMLCanvasElement) =
+    ctx.fillStyle <- !^"#222"
+    ctx.fillRect (0., 0., canvas.width, canvas.height)
 
-type Particle =
-    { Coord: Point; Velocity: Point; Radius:float; Color:string }
+  let drawText (text, x, y, (align, baseline)) =
+    ctx.fillStyle <- !^"#999"
+    ctx.font <- "Arial 40px"
+    ctx.textAlign <- align
+    ctx.textBaseline <- baseline
 
-let palette = [| "red"; "green"; "orange"; "gray"; "teal" |]
+    ctx.fillText (text, x, y)
 
-let randomParticle () =
-    let randomIndex = (float palette.Length *  JS.Math.random()) |> int
-    {  Coord = { X = JS.Math.random() * width*0.8 + (width*0.1); Y = 600. } 
-       Velocity = { X = JS.Math.random() * 2. - 1.; Y = 0.0 }
-       Radius = 10.
-       Color = palette.[randomIndex] }
-
-let drawParticle 
-    (ctx: CanvasRenderingContext2D)
-    (canvas: HTMLCanvasElement) p =
-    ctx.beginPath()
-    ctx.arc
-        ( p.Coord.X, canvas.height - (p.Coord.Y + p.Radius),
-          p.Radius, 0., 2. * System.Math.PI, false )
-    ctx.fillStyle <- !^ p.Color
-    ctx.fill()
-    ctx.lineWidth <- 3.
-    ctx.strokeStyle <- !^ p.Color
-    ctx.stroke()
-
-
-let applyGravity delta p =
-    if p.Coord.Y > 0. then
-        { p with Velocity = {p.Velocity with Y = p.Velocity.Y - 0.005 * delta } }
+  let applyGravity delta p =
+    if p.Coord.Y + p.Radius > 0.
+    then { p with Velocity = { p.Velocity with Y = p.Velocity.Y - 0.001 * delta } }
     else p
 
-let move delta p =
-    let (|Move|Bounce|) p = 
-        if p.Coord.Y = 0. && p.Velocity.Y < 0. then Bounce else Move
+  let move _delta p =
+    let (|Move|Bounce|) p =
+      if p.Coord.Y - p.Radius <= 0. && p.Velocity.Y < 0. then Bounce else Move
 
-    let coord, velocity = p |> function
-        | Bounce -> 
-            { X = p.Coord.X + p.Velocity.X
-              Y = (p.Coord.Y + p.Velocity.Y) }, 
-            { X = p.Velocity.X / 2.; Y = - p.Velocity.Y / 2. }
-        | Move -> 
-            { X = p.Coord.X + p.Velocity.X
-              Y = max 0. (p.Coord.Y + p.Velocity.Y) }, p.Velocity
-    { p with Coord = coord; Velocity = velocity }
+    let coord, velocity =
+      p
+      |> function
+      | Bounce ->
+          console.log ("BOUNCE")
+          let v' = p.Velocity / 2. |> Vector2.flipY
+          p.Coord + v', v'
+      | Move -> p.Coord + p.Velocity |> Vector2.max { p.Coord with Y = p.Radius }, p.Velocity
 
-let addParticles particles =
-    if floor(JS.Math.random()*8.) = 0. then
+    { p with
+        Coord = coord
+        Velocity = velocity }
+
+  let seconds() = System.DateTime.Now.TimeOfDay.TotalSeconds
+  let requestAnimationFrame = window.requestAnimationFrame >> ignore
+
+  type State =
+    | Spawning
+    | Regular
+    | Completed
+
+  type Game =
+    { StartSeconds: float
+      State: State
+      Particles: Particle list
+      QuadTree: QuadTree<Particle> }
+
+  module Game =
+    let spawnParticle game =
+      if floor (JS.Math.random() * 2.) = 0. then
         let particle = randomParticle()
-        particle::particles
-    else particles
+        { game with Particles = particle :: game.Particles }
+      else
+        game
 
-let seconds() = System.DateTime.Now.TimeOfDay.TotalSeconds
-let requestAnimationFrame = window.requestAnimationFrame >> ignore
+    let simulateParticles delta game =
+      let particles = game.Particles |> List.map (applyGravity delta >> move delta)
+      let quadTree =
+        Rectangle.fromTLWH (0., 0., Width, Height) |> QuadTree.build particles Particle.getBounds
+      { game with
+          Particles = particles
+          QuadTree = quadTree }
 
-type State = Spawning | Regular | Completed
+  let newGame() =
+    let quadTree = Rectangle.fromTLWH (0., 0., Width, Height) |> QuadTree.createEmptyRoot
+    console.log (quadTree)
 
-type Game = 
-    {   StartSeconds: float
-        State: State
-        Particles: Particle list }
+    { StartSeconds = seconds()
+      State = Spawning
+      Particles = []
+      QuadTree = quadTree }
 
-let newGame() = { StartSeconds = seconds(); State = Spawning; Particles = [] }
-    
-// The game loop
-// ========================
+  // The game loop
+  // ========================
 
-let recalc delta particles  = 
-    particles 
-    |> List.map (applyGravity delta)
-    |> List.map (move delta)
 
-let render delta elapsed game =
+  let render delta elapsed game =
     drawBg ctx canvas
-    for particle in game.Particles do drawParticle ctx canvas particle
-    let message = 
-        sprintf "Delta: %f; Elapsed: %f; Particles count: %d" 
-            delta elapsed (game.Particles |> List.length)
-    drawText (message, 20., 20.)
+    for particle in game.Particles do
+      draw ctx particle
+
+    QuadTree.draw ctx game.QuadTree
+    let message =
+      sprintf "Delta: %f; Elapsed: %f; Particles count: %d" delta elapsed
+        (game.Particles |> List.length)
+    drawText (message, 20., 20., ("left", "top"))
+
     if (game.State = Completed) then
-        drawText ("COMPLETED", 320., 300.)
+      drawText ("COMPLETED", Width / 2., Height / 2., ("center", "middle"))
 
 
-let update (delta: float) (elapsed: float) game = 
+  let update (delta: float) (elapsed: float) game =
     match game.State, elapsed with
-        | Spawning, x when x < 2. -> 
-            { game with Particles = game.Particles |> addParticles |> recalc delta }
-        | Spawning, _ -> 
-            { game with State = Regular; Particles = game.Particles |> recalc delta }
-        | Regular, x when x < 7. -> 
-            { game with Particles = game.Particles |> recalc delta }
-        | Regular, _ -> 
-            { game with State = Completed }
-        | Completed, x when x < 15. -> game
-        | Completed, _ -> newGame()
+    | Spawning, x when x < 4. ->
+        game
+        |> Game.spawnParticle
+        |> Game.simulateParticles delta
+    | Spawning, _ ->
+        game
+        |> Game.simulateParticles delta
+        |> (fun g -> { g with State = Regular })
+    | Regular, x when x < 15. -> game |> Game.simulateParticles delta
+    | Regular, _ ->
+        console.log (game.QuadTree)
+        { game with State = Completed }
+    | Completed, x when x < 1500. -> game
+    | Completed, _ -> newGame()
 
-let rec gameFrame prevTimestamp game  timestamp = 
+  let rec run prevTimestamp game timestamp =
     let delta = timestamp - prevTimestamp
     let elapsed = seconds() - game.StartSeconds
     let newGame = update delta elapsed game
-    render delta elapsed newGame
-    gameFrame timestamp newGame |> requestAnimationFrame
 
-newGame() 
-|> gameFrame 0.
-|> requestAnimationFrame
+    render delta elapsed newGame
+    run timestamp newGame |> requestAnimationFrame
+
+  newGame()
+  |> run 0.
+  |> requestAnimationFrame
