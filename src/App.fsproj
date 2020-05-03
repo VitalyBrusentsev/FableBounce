@@ -3,6 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Mode.fs" />
     <Compile Include="Config.fs" />
     <Compile Include="Vector2.fs" />
     <Compile Include="Rectangle.fs" />
