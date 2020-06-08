@@ -26,4 +26,4 @@ jobs:
         node-version: '12'
     # Runs a single command using the runners shell
     - run: npm install
-    - run: npm run start
+    - run: npm run build
