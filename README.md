@@ -1,4 +1,6 @@
 # FableBounce
+![example workflow file path](https://github.com/VitalyBrusentsev/FableBounce/workflows/.github/workflows/main.yml/badge.svg)
+
 A Fable toy project to play with HTML Canvas
 
 Uses Fable compiler to convert F# source code to JavaScript and run in the browser.
