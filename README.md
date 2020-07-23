@@ -1,5 +1,5 @@
 # FableBounce
-![example workflow file path](https://github.com/VitalyBrusentsev/FableBounce/workflows/.github/workflows/main.yml/badge.svg)
+![CI](https://github.com/VitalyBrusentsev/FableBounce/workflows/CI/badge.svg)
 
 A Fable toy project to play with HTML Canvas
 
