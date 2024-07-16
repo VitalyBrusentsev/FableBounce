@@ -3,16 +3,14 @@
   "version": "1.0.0",
   "description": "Fable canvas toy project",
   "scripts": {
-    "build": "webpack --mode production",
-    "start": "webpack-dev-server --mode development"
+    "postinstall": "dotnet tool restore",
+    "start": "dotnet fable watch src -s --sourceMapsRoot src --run webpack serve --mode development",
+    "build": "dotnet fable ./ && webpack --mode production --node-env production"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.7",
-    "fable-compiler": "^2.4.21",
-    "fable-loader": "^2.1.9",
-    "webpack": "^4.38.0",
-    "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.7.2"
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
   },
   "author": "Vitaly Brusentsev",
   "license": "ISC"

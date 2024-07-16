@@ -7,8 +7,8 @@ Uses Fable compiler to convert F# source code to JavaScript and run in the brows
 
 ## Requirements
 
-- NET Core 2.2+
-- Node.js 10.0+
+- NET 8
+- Node.js 22.4.1+
 
 ## Installation
 To compile the project, run the following commands

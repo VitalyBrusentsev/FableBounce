@@ -194,9 +194,9 @@ docs/tools/FSharp.Formatting.svclog
 .ionide.debug
 *.bak
 project.lock.json
-bundle.js
-bundle.js.map
 .fable
-main.js
+*.fs.js
+*.fs.js.map
 .fake
 .ionide
+dist/
