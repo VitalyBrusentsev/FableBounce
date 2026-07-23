@@ -10,7 +10,7 @@
   "devDependencies": {
     "webpack": "^5.105.4",
     "webpack-cli": "^7.0.2",
-    "webpack-dev-server": "^5.2.3"
+    "webpack-dev-server": "^6.0.0"
   },
   "author": "Vitaly Brusentsev",
   "license": "ISC"
